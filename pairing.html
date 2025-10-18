@@ -1,186 +1,248 @@
 <!doctype html>
 <html>
 
-    <head>
+<head>
+  <meta charset="utf-8" />
+  <title>Wichteln</title>
 
-        <meta charset="utf-8" />
-        <title>Secret Santa Pairing</title>
+  <script src="vendors/Lodash-3.10.1.js"></script>
+  <script src="vendors/Cryptojs.aes-3.1.2.js"></script>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-        <script src="vendors/Lodash-3.10.1.js"></script>
-        <script src="vendors/Cryptojs.aes-3.1.2.js"></script>
+    html,
+    body,
+    .main {
+      margin: 0;
 
-        <style>
+      width: 100%;
+      height: 100%;
 
-            * {
-                box-sizing: border-box;
-            }
+      padding: 0;
+    }
 
-            html, body, .main {
-                margin: 0;
+    body {
+      background: url(./assets/snow.png), url(./assets/santa.png),
+        url(./assets/snow.png), radial-gradient(#fb3b3b, #ef3d3d);
+      background-repeat: repeat, no-repeat, repeat, no-repeat;
 
-                width: 100%;
-                height: 100%;
+      animation-name: snow;
+      animation-duration: 5s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
 
-                padding: 0;
-            }
+      font-family: "Comic Sans MS";
+    }
 
-            body {
-                background: url(./assets/snow.png), url(./assets/santa.png), url(./assets/snow.png), radial-gradient(#FB3B3B, #EF3D3D);
-                background-repeat: repeat, no-repeat, repeat, no-repeat;
+    @keyframes snow {
+      from {
+        background-position:
+          130px 40px,
+          bottom right,
+          0 0,
+          0 0;
+      }
 
-                animation-name: snow;
-                animation-duration: 5s;
-                animation-iteration-count: infinite;
-                animation-timing-function: linear;
+      to {
+        background-position:
+          130px 640px,
+          bottom right,
+          0 300px,
+          0 0;
+      }
+    }
 
-                font-family: 'Comic Sans MS';
-            }
+    .spirit-of-christmas {
+      display: block;
 
-            @keyframes snow {
-                from { background-position: 130px 40px, bottom right, 0 0, 0 0; }
-                to { background-position: 130px 640px, bottom right, 0 300px, 0 0; }
-            }
+      position: absolute;
+      bottom: 0;
+      left: 0;
 
-            .spirit-of-christmas {
-                display: block;
+      padding: 20px;
 
-                position: absolute;
-                bottom: 0;
-                left: 0;
+      font-size: 10px;
+      text-decoration: none;
 
-                padding: 20px;
+      color: #ffffff;
+    }
 
-                font-size: 10px;
-                text-decoration: none;
+    .main {
+      display: flex;
+    }
 
-                color: #FFFFFF;
-            }
+    .background {
+      position: absolute;
 
-            .main {
-                display: flex;
-            }
+      left: 0;
+      bottom: 0;
+    }
 
-            .background {
-                position: absolute;
+    .wrapper {
+      margin: auto;
+      padding: 20px;
 
-                left: 0;
-                bottom: 0;
-            }
+      background: repeating-linear-gradient(45deg,
+          #5cc48a,
+          #5cc48a 30px,
+          #ffffff 30px,
+          #ffffff 60px,
+          #ef3d3d 60px,
+          #ef3d3d 90px,
+          #ffffff 90px,
+          #ffffff 120px);
 
-            .wrapper {
-                margin: auto;
-                padding: 20px;
+      box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
+    }
 
-                background: repeating-linear-gradient(
-                    45deg,
-                    #5CC48A,
-                    #5CC48A 30px,
-                    #FFFFFF 30px,
-                    #FFFFFF 60px,
-                    #EF3D3D 60px,
-                    #EF3D3D 90px,
-                    #FFFFFF 90px,
-                    #FFFFFF 120px
-                );
+    .content {
+      padding: 40px;
 
-                box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
-            }
+      background: #ffffff;
 
-            .content {
-                padding: 40px;
+      text-align: center;
+    }
 
-                background: #ffffff;
+    .title {
+      font-size: 30px;
+    }
 
-                text-align: center;
-            }
+    #pairing-name {
+      font-size: 90px;
+    }
 
-            .title {
-                font-size: 30px;
-            }
+    #pairing-details {
+      margin-bottom: 20px;
 
-            #pairing-name {
-                font-size: 90px;
-            }
+      font-size: 20px;
+    }
 
-            #pairing-details {
-                margin-bottom: 20px;
+    .affiliate {
+      display: block;
+      box-sizing: content-box;
 
-                font-size: 20px;
-            }
+      margin-top: 40px;
 
-            .affiliate {
-                display: block;
-                box-sizing: content-box;
+      border: none;
 
-                margin-top: 40px;
+      background: rgba(255, 255, 255, 0.7);
+    }
 
-                border: none;
+    .affiliate+.affiliate {
+      margin-top: 40px;
+    }
 
-                background: rgba(255, 255, 255, .7);
-            }
+    .blurred {
+      filter: blur(25px);
+      /* Adjust the blur strength here (higher value = more blur) */
+      transition: filter 0.3s ease;
+      /* Optional: adds a smooth transition when un-blurring */
+    }
+  </style>
+  <script>
+    // This function checks if the current time is after the fixed reveal time
+    const revealDate = new Date("2025-10-19T19:00:00");
 
-            .affiliate + .affiliate {
-                margin-top: 40px;
-            }
+    const dayMonth = revealDate.toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+    });
 
-        </style>
+    // Get the time in the format "HH:MM"
+    const time = revealDate.toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false, // 24-hour format
+    });
+    function canRevealPicks(revealDate) {
+      const currentDate = new Date();
+      return currentDate >= revealDate; // Return true if it's after the fixed time, false otherwise
+    }
 
-        <script>
+    // Decrypt and parse the query parameters
+    var queryString = _.chain(location.search.slice(1).split(/&/g))
+      .map(function (item) {
+        if (item)
+          return item.split(/=/).map(function (str) {
+            return decodeURIComponent(str);
+          });
+      })
+      .compact()
+      .object()
+      .value();
 
-            var queryString = _.chain( location.search.slice( 1 ).split( /&/g ) )
-                .map( function ( item ) { if ( item ) return item.split( /=/ ).map( function ( str ) { return decodeURIComponent( str ); } ); } )
-                .compact().object().value();
+    var name = queryString.name;
 
-            var name = queryString.name;
+    var pairing = CryptoJS.AES.decrypt(
+      queryString.pairing,
+      queryString.key,
+    ).toString(CryptoJS.enc.Utf8);
+    var pairingDefinition = pairing.match(/^([^(]+)(?: (\([^)]+\)))?$/);
 
-            var pairing = CryptoJS.AES.decrypt( queryString.pairing, queryString.key ).toString(CryptoJS.enc.Utf8);
-            var pairingDefinition = pairing.match( /^([^(]+)(?: (\([^)]+\)))?$/ );
+    // When the page loads, check if the picks can be revealed or not
+    document.addEventListener("DOMContentLoaded", function () {
+      const nameElement = document.getElementById("name");
+      const pairingNameElement = document.getElementById("pairing-name");
+      const pairingDetailsElement =
+        document.getElementById("pairing-details");
 
-        </script>
+      // Set the name (it is always visible)
+      nameElement.innerText = name;
 
-    </head>
+      // If the reveal time has not passed, blur the pairing name
+      // Show the pairing details
+      if (canRevealPicks(revealDate)) {
+        // If the reveal time has passed, remove the blur from the pairing name
+        pairingNameElement.classList.remove("blurred");
+        pairingNameElement.innerText = pairingDefinition[1];
+        if (pairingDefinition[2]) {
+          pairingDetailsElement.innerText = pairingDefinition[2];
+        } else {
+          pairingDetailsElement.style.display = "none";
+        }
+      } else {
+        // If the reveal time has not passed, apply the blur to the pairing name
+        pairingNameElement.classList.add("blurred");
 
-    <body>
+        // Don't display pairing name or details yet
+        pairingNameElement.innerText = "wichtel"; // Clear the pairing name
+        const formattedDate = `Auflösung am ${dayMonth} um ${time} Uhr`;
 
-        <div class="main">
+        pairingDetailsElement.innerText = formattedDate;
+      }
+    });
+  </script>
+</head>
 
-            <div class="wrapper">
-                <div class="content">
-
-                    <div class="title">Hi <span id="name"></span>! You've been paired with</div>
-                    <script>document.getElementById('name').innerText = name</script>
-
-                    <div class="pairing">
-                        <div id="pairing-name"></div>
-                        <div id="pairing-details"></div>
-                        <script>
-                            document.getElementById('pairing-name').innerText = pairingDefinition[1];
-
-                            if (pairingDefinition[2]) {
-                                document.getElementById('pairing-details').innerText = pairingDefinition[2];
-                            } else {
-                                document.getElementById('pairing-details').style.display = 'none';
-                            }
-                        </script>
-                    </div>
-
-                    <div class="title">Good luck!</div>
-
-                    <script>
-                        if (queryString.extra) {
-                            document.write('<iframe class="affiliate" src="http://rcm-eu.amazon-adsystem.com/e/cm?t=secrsant02e-21&o=8&p=48&l=ur1&category=books&banner=10DQAXJ7D1D2VTXMR682&f=ifr" width="728" height="90" scrolling="no" border="0" marginwidth="0" frameborder="0"></iframe>');
-                        }
-                    </script>
-
-                </div>
-            </div>
-
-            <a href="http://arcanis.github.io/secretsanta/" class="spirit-of-christmas">
-                Want to start your own Secret Santa with your friends? Click here to get started!
-            </a>
-
+<body>
+  <div class="main">
+    <div class="wrapper">
+      <div class="content">
+        <!-- <audio autoplay loop id="christmas-music" preload="auto"> -->
+        <!--   <source src="assets/alliwantforchristmas.mp3" type="audio/mpeg" /> -->
+        <!--   Your browser does not support the audio element. -->
+        <!-- </audio> -->
+        <div class="title">
+          Hi <span id="name"></span>! Du hast dieses Jahr
         </div>
 
-    </body>
+        <div class="pairing">
+          <div id="pairing-name"></div>
+          <div id="pairing-details"></div>
+        </div>
+
+        <div class="title">gezogen!</div>
+      </div>
+    </div>
+
+    <a href="https://ida-idefix.de" class="spirit-of-christmas">
+      Want to start your own Secret Santa with your friends? Click here to get
+      started!
+    </a>
+  </div>
+</body>
 
 </html>
